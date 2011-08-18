@@ -1,0 +1,27 @@
+<html>
+  <head>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+    <script type="text/javascript" src="jquery.simple_lifestream.js"></script>
+    <script type="text/javascript">
+      $().ready(function(){
+        $("#lifestream").lifestream({
+          "feeds" : [
+             "http://github.com/kenda.atom",
+          ],
+          "count" : 10,
+          "api_key" : null // YOUR-API-KEY
+        }, function(){
+          // collapse content and create a 'more' link
+          $("#entries .content").hide();
+          $("#entries .title").append("&nbsp;<a href='#' class='more'>more..</a>");
+          $("#entries .more").click(function(){
+            $(this).parents("li").children(".content").toggle();
+          });
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div id="lifestream"></div>
+  </body>
+</html>
