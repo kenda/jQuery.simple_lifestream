@@ -1,147 +1,96 @@
-/**
- * jQuery simple_lifestream plugin.
- * Author: Marcus Nitzschke
- * 
- * The plugin aggregates different feeds and sort all entries 
- * by date.
- * 
- * Contribution:
- * The favicon extraction is inspired by
- * jQuery UrlFavicon Plugin - http://urlfavicon.danswackyworld.com - Daniel Yates
- */
+(function() {
 
-(function($) {
-  $.fn.lifestream = function(options, callback)
-  {
-    // Defining settings and default values
-    var settings = jQuery.extend(
-      {
-	// array of the feed urls
-	feeds : [],
-	
-	// number of shown items
-	count : 5,
-	
-	// optionally hide the favicons
-	favicons : true,
-	
-	// Google api key
-	api_key : null
-      },options
-    );
-    
-    // Array of all feed data
-    var feeds = [];
-    
-    // getting targeted DOM element
-    var output = $(this);
-    
-    // initial cleaning of the target
-    output.empty();
+  /*
+   jQuery simple_lifestream plugin.
+   Author: Marcus Nitzschke
+  
+   The plugin aggregates different feeds and sort all entries
+   by date.
+  
+   Contribution:
+   The favicon extraction is inspired by
+   jQuery UrlFavicon Plugin - http://urlfavicon.danswackyworld.com - Daniel Yates
+  */
 
-    // load google feed api
-    var key = settings.api_key ? "?key="+settings.api_key : "";
-    $.getScript('https://www.google.com/jsapi' + key, function(){
+  var $;
 
-      google.load("feeds", "1", { callback: function(){
+  $ = jQuery;
 
-	$.each(settings.feeds, function(index, url){
-
-	  // get feed items
-	  var feed = new google.feeds.Feed(url);
-	  feed.setNumEntries(settings.count);
-	  feed.includeHistoricalEntries();
-	  feed.load(function(result) {
-            if (!result.error) {
-	     
-	      // push feed to the global array
-	      feeds.push(result);
-
-	      if (index+1 === settings.feeds.length) {
-	
-		// transform the native feed objects into more useful entry objects
-		var entries = [];
-		$.each(feeds, function(index, item){
-		  var feed_index = index;
-
-		  $.each(item.feed.entries, function(index, entry){
-		    
-		    // retrieve the favicon of the feed
-		    var favicon = null;
-		    if (settings.favicons){
-		      var http = '(https*:\\/\\/)';
-		      var fqdn = '((?:[a-z][a-z\\.\\d\\-]+)\\.(?:[a-z][a-z\\-]+))(?![\\w\\.])';
-		      var url = new RegExp(http + fqdn, ['i']).exec(entry.link);
-
-		      if(url != null) {
-			favicon = url[0] + '/favicon.ico';
-		      }
-		      else{
-			// Default icon
-			// TODO
-		      }
-		    }
-
-		    entries.push({
-		      "feed" : item.feed.title,
-		      "favicon" : favicon,
-		      "author" : entry.author,
-		      "title" : entry.title,
-		      "content" : entry.content,
-		      "date" : entry.publishedDate,
-		      "link" : entry.link
-		    });
-		    
-		    if ((index+1 === item.feed.entries.length) && (feed_index+1 === feeds.length)){
-		      // sort all feeds by date
-		      entries.sort(_entrySort);
-
-		      // display the results
-		      $(output).append("<ul id='entries'>");
-		      
-		      // check wether there are less items than requested to be printed
-		      var length = Math.min(settings.count, entries.length);
-		      
-		      for ( i = 0; i < length; i++){
-			// set favicon output
-			favicon = entries[i].favicon ? "<img width='16' height='16' src='"+entries[i].favicon+"'/>&nbsp;" : "";
-
-			$("#entries")
-			  .append(""
-				  + "<li>"
-				  + favicon
-				  + "<span class='title'>"
-    				  + "<a href='"+entries[i].link+"' title='by "+entries[i].author+" on "+entries[i].date+"'>"
-				  + entries[i].title
-				  + "</a>"
-				  + "</span><br />"
-				  + "<span class='content'>"+entries[i].content+"</span>"
-				  + "</li>"
-				 );
-			
-			// finally call the optional callback function
-			if ( (i+1 === length) && ($.isFunction(callback)) ){
-			  callback();
-			};
-		      };
-		    };
-		  });
-		});
-              };
-	    };
-	  });
-	});
-      }});
-    });
-    
-    /**
-     * Sort entry objects by descending date
-     */
-    function _entrySort(a, b){
-      a = new Date(a.date);
-      b = new Date(b.date);
-      return b - a;
+  $.fn.extend({
+    lifestream: function(options, callback) {
+      var feeds, key, output, settings;
+      settings = jQuery.extend({
+        feeds: [],
+        count: 5,
+        favicons: true,
+        api_key: null
+      }, options);
+      feeds = [];
+      output = $(this);
+      output.empty();
+      key = settings.api_key ? "?key=" + settings.api_key : "";
+      $.getScript("https://www.google.com/jsapi" + key, function() {
+        return google.load("feeds", "1", {
+          callback: function() {
+            var feed, _i, _len, _ref, _results;
+            _ref = settings.feeds;
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              feed = _ref[_i];
+              feed = new google.feeds.Feed(feed);
+              feed.setNumEntries(settings.count);
+              feed.includeHistoricalEntries();
+              _results.push(feed.load(function(result) {
+                if (!result.error) return feeds.push(result);
+              }));
+            }
+            return _results;
+          }
+        });
+      });
+      return setTimeout((function() {
+        var entries, entry, favicon, fqdn, http, i, item, length, url, _i, _j, _len, _len2, _ref;
+        entries = [];
+        for (_i = 0, _len = feeds.length; _i < _len; _i++) {
+          item = feeds[_i];
+          _ref = item.feed.entries;
+          for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
+            entry = _ref[_j];
+            favicon = null;
+            if (settings.favicons) {
+              http = "(https*:\\/\\/)";
+              fqdn = "((?:[a-z][a-z\\.\\d\\-]+)\\.(?:[a-z][a-z\\-]+))(?![\\w\\.])";
+              url = new RegExp(http + fqdn, ['i']);
+              url = url.exec(entry.link);
+              favicon = url ? url[0] + '/favicon.ico' : null;
+            }
+            entries.push({
+              feed: item.feed.title,
+              favicon: favicon,
+              author: entry.author,
+              title: entry.title,
+              content: entry.content,
+              date: entry.publishedDate,
+              link: entry.link
+            });
+          }
+        }
+        entries.sort(function(a, b) {
+          a = new Date(a.date);
+          b = new Date(b.date);
+          return b - a;
+        });
+        $(output).append("<ul id='entries'>");
+        length = Math.min(settings.count, entries.length);
+        for (i = 0; 0 <= length ? i <= length : i >= length; 0 <= length ? i++ : i--) {
+          if (entries[i] != null) {
+            favicon = entries[i].favicon ? "<img width='16' height='16' src='" + entries[i].favicon + "'/>&nbsp;" : "";
+            $("#entries").append("<li> " + favicon + "\n     <span class='title'>\n          <a href='" + entries[i].link + "' title='by " + entries[i].author + " on " + entries[i].date + "'>\n               " + entries[i].title + "\n          </a>\n      </span>\n      <br />\n      <span class='content'>\n           " + entries[i].content + "\n      </span>\n</li>");
+          }
+        }
+        if ($.isFunction(callback)) return callback();
+      }), 500);
     }
+  });
 
-  };
-})(jQuery);
+}).call(this);
